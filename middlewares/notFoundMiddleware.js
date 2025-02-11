@@ -5,5 +5,4 @@ const notFoundMiddleware = (req,res,next)=>{
         error : 'page not found'
     });
 }
-
 module.exports = notFoundMiddleware;

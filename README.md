@@ -1,5 +1,4 @@
-# express-blog-api-crud
+## Blog Api CRUD Web
+output:
 
-Project Express CRUD (index/show/store/update/destroy) Optimizated
-
-
+blog api CRUD + file uploader

@@ -1,38 +1,42 @@
 //controllers/PostController.js
-const posts = require('../db/storeposts.js');
-const fs = require('fs');
+const posts = require('../db/storeposts.js');  //custom db full of examples
+const fs = require('fs');  //import fs per scrivere su file
 const path = require('path');  //x path absolute of your root
-const multer = require('multer');  //x upload file img on server(express)
+const multer = require('multer');  //x upload ANY file on server(express)
 
-// Ottieni il percorso assoluto per il file storeposts.js
-const dbPath = path.join(__dirname, '../db/storeposts.js');  //with only '../db/storeposts.js' in Store return me error 500!
+//req & res sono standart usati da express(IL SERVER,NON E' UN MIDDLEWARE!), forniti al myrouter quando avviene una quasiasi request http
+//req contiene la richiesta x il server, res conterrà la risposta per il client
+//req methods: i.e. .params(), .query(), .body(), .headers(), .ip(),....
+//res methods:i.e. .send()(send custom mex), .json()(send js obj), .status(), .sendFile(path), .redirect(url)....
 
-const pathImagecover = path.join(__dirname, '../public/imgcover');
-// Set Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, pathImagecover);  // Salva i file nella cartella 'public/images'
+const dbPath = path.join(__dirname, '../db/storeposts.js');  //absolute path
+const pathImagecover = path.join(__dirname, '../public/imgcover');  //absolute path 
+
+// Set Multer to upload ANY file
+const mystorage=multer.diskStorage({  //custom configuration(Multer) called 'storage'
+    destination:(req,file,cb)=>{  //where save file, cb is callback(the function where operate, with Nodejs follow convention cb(manageerror-result))
+      cb(null, pathImagecover);  //cb(noerrors-path) where save file
     },
-    filename: (req, file, cb) => {
-      //const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);  //BETTER USE THIS X SECURITY & NAME CONFLICTS!!
+    filename: (req,file,cb) => {  //how name file
+      //const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);  //better x security and name conflicts
       //cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`); // Usa un nome unico generato
-      cb(null, file.originalname);  //mantiene il nome del file uploaded
+      cb(null, file.originalname);  ////cb(noerrors-namefile) maintain the same name
     },
 });
-const upload = multer({ storage: storage });
+const upload=multer({storage:mystorage});  //pass own custom configuration to Multer, and name all 'upload'
 
 
-const index = (req,res)=>{    //INDEX
+const index=(req,res)=>{    //INDEX
     return res.status(200).json({
         data : posts,
         counter : posts.length
     });
 };
 
-const show = (req,res)=>{    //SHOW
-    const postIndex = posts.findIndex((intem,index)=> intem.id === Number(req.params.id));
+const show=(req,res)=>{    //SHOW
+    const postIndex = posts.findIndex((item,index)=> item.id === Number(req.params.id));  //findIndex() return the index in the array (return -1 if not found),Number() converts in num
     console.log(postIndex);
-    if(postIndex===-1){  //!post sarebbe ambiguo con posts[0] e un post mancante (-1)
+    if(postIndex===-1){  
         return res.status(404).json({
             error : '404 Not Found'
         });
@@ -42,58 +46,54 @@ const show = (req,res)=>{    //SHOW
     });
 };
 
-const store = (req,res)=>{    //STORE
+const store=(req,res)=>{    //STORE
     //console.log(req.body);
-    const filePath = req.file ? `/imgcover/${req.file.filename}` : null; // Percorso servibile
+    const filePath = req.file ? `/imgcover/${req.file.filename}` : null; //req.file(provided by Multer, contains the file uploaded), set the full path where save file in the backend
     const post = {
-        //id : posts.length > 0 ? posts[posts.length-1].id+1 : 1,
-        id: req.body.id,
-        slug : req.body.slug,   //x SEO, i.e. //example.com/blog/come-fare-una-ricetta-fantastica is better than example.com/blog/3452
+        id: Number(req.body.id),  //when test on postman here use Number format
+        slug : req.body.slug,   //important also x seo, i.e. sonic-hyperspace-rocket
         title : req.body.title,
         content : req.body.content,
-        price : req.body.price,
-        //file : req.body.file,
-        file : filePath,
+        price : Number(req.body.price),
+        file : filePath,  //THE NAME OF THE FIELD IS 'FILE' foundamental x 'upload.single('file')'
         category: req.body.category,
         tags : req.body.tags,
         visibility: req.body.visibility,
 
     };
-    //console.log(post);
-    posts.push(post);
-    console.log(posts);
+    posts.push(post);  //add the new post
     try{  
-        fs.writeFileSync(dbPath,`module.exports = ${JSON.stringify(posts,null,4)}`);
-        //console.log({data:posts});  //see the output
-        return res.status(201).json({  //201 created new resources
+        fs.writeFileSync(dbPath,`module.exports = ${JSON.stringify(posts,null,4)}`);  //overwrite my db example
+          //overwrite posts.js file, with string 'module.exports ='+${JSON.stringify(posts,null,4)}
+          //json.stringify(thearray-mask(none here)-indentation spaces(crea formattazione nidificazione verso destra))
+        return res.status(201).json({  //201 = created
             data : posts,
             counter : posts.length
         });
     }
     catch{
-        return res.status(500).json({ error: 'Error storing the post data.' });
+        return res.status(500).json({ error:'Error storing the post data.'});
     }
 };
+//test with PostMan software (new>body:raw,Json)(x img files use body:formdata)
 
-const update = (req,res)=>{    //UPDATE
-    //console.log('go update');
+const update=(req,res)=>{    //UPDATE
     const postIndex = posts.findIndex((intem,index)=> intem.id === Number(req.params.id));
-      //se non trova return -1
     console.log(postIndex);
-    if(postIndex===-1){  //!post sarebbe ambiguo con posts[0] e un post mancante (-1)
+    if(postIndex===-1){
         return res.status(404).json({
             error : '404 Not Found'
         });
     }
     const newpost = {
-        ...posts[postIndex], // create copy of actual posts[postIndex]
-        title: req.body.title || posts[postIndex].title,  //overwrite only if found posts[postIndex].title
+        ...posts[postIndex], //create copy of the post target, if a field is declared >1 time, the last dichiaration wins!
+        title: req.body.title || posts[postIndex].title,  //upload the field with the new value(if exists)
         slug: req.body.slug || posts[postIndex].slug,
         content: req.body.content || posts[postIndex].content,
         image: req.body.image || posts[postIndex].image,
         tags: req.body.tags || posts[postIndex].tags
     }
-    posts[postIndex] = newpost;
+    posts[postIndex] = newpost;  //upload the target index with the new created post
     try{
         fs.writeFileSync('../db/storeposts.js',`module.exports=${JSON.stringify(posts,null,4)}`);
         return res.status(200).json({
@@ -101,18 +101,18 @@ const update = (req,res)=>{    //UPDATE
         });
     }
     catch{
-        return res.status(500).json({ error: 'Error updating the post data.' });
+        return res.status(500).json({error:'Error updating the post data.'});
     }
 };
 
-const destroy = (req,res)=>{    //DESTROY
+const destroy=(req,res)=>{    //DESTROY
     const postIndex = posts.findIndex((intem,index)=> intem.id === Number(req.params.id));
-    if(postIndex===-1){  //!post sarebbe ambiguo con posts[0] e un post mancante (-1)
+    if(postIndex===-1){  
         return res.status(404).json({
             error : '404 Not Found'
         });
     }
-    posts.splice(postIndex, 1);  //!non riassegnare gli id ma nella lista lasciare buchi perche gli id sono unici!, ma puoi crearne incrementali
+    posts.splice(postIndex, 1);  //splice(index-nums) remove element from the array, lascia buchi xk non puoi riutilizzare in nuovi post same index of deleted posts!
     try{
         fs.writeFileSync('../db/storeposts.js',`module.exports=${JSON.stringify(posts,null,4)}`);
         return res.status(200).json({
@@ -121,17 +121,17 @@ const destroy = (req,res)=>{    //DESTROY
         });
     }
     catch{
-        return res.status(500).json({ error: 'Error deleting the post data.' });
+        return res.status(500).json({ error:'Error deleting the post data.'});
     }
 };
 
-module.exports = {
+module.exports={  //export your functions
     index,
     show,
     store,
     update,
     destroy,
-    upload,
+    upload,  //export also upload!
 }
 
 

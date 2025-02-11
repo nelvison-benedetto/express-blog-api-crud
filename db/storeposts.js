@@ -83,4 +83,15 @@ module.exports = [
         ],
         "visibility": "post"
     },
+    {
+        "id": 7,
+        "slug": "xx",
+        "title": "xxx",
+        "content": "xxxx",
+        "price": 100,
+        "file": "/imgcover/matplotlib-anatomy-of-a-plot.png",
+        "category": "xxxxxx",
+        "tags": "xxxxxxx",
+        "visibility": "xxxxxxxx"
+    }
 ]
