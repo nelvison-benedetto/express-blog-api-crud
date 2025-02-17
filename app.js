@@ -5,10 +5,12 @@ const PORT = process.env.PORT;  //port (.env var)
 const express = require('express');  //import express
 const app = express();  //create 'express' application
 
+app.use(express.json());  //(BEFORE MULTER!!) abilitate parsing Json in the requests body (obj js accessible with "req.body")
+app.use(express.urlencoded({ extended: true })); // Permette di gestire dati form-urlencoded
+
 const cors = require('cors');  //abilitate cross-orgin x requests from differents domains(i.e. front-end localhost:3000 and back-end localhost:5000)
 const path = require('path');  //lib built-in Node.js x manage path's files
 
-app.use(express.json());  //abilitate parsing Json in the requests body (obj js accessible with "req.body")
 app.use(cors());  //!abilitate ANY domain(i.e. xyz.com) to make http requests to this express server!
 app.use(express.static('public'));  //serve the static files from folder 'public'
    //i.e. /immagini/foto.jpg -> public/immagini/foto.jpg

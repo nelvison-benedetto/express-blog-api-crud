@@ -3,6 +3,7 @@ const posts = require('../db/storeposts.js');  //custom db full of examples
 const fs = require('fs');  //import fs per scrivere su file
 const path = require('path');  //x path absolute of your root
 const multer = require('multer');  //x upload ANY file on server(express)
+const { v4: uuidv4 } = require('uuid');  //npm install uuid, id univoco +-128bit(still not using Autoincrement sql)
 
 //req & res sono standart usati da express(IL SERVER,NON E' UN MIDDLEWARE!), forniti al myrouter quando avviene una quasiasi request http
 //req contiene la richiesta x il server, res conterrà la risposta per il client
@@ -50,16 +51,15 @@ const store=(req,res)=>{    //STORE
     //console.log(req.body);
     const filePath = req.file ? `/imgcover/${req.file.filename}` : null; //req.file(provided by Multer, contains the file uploaded), set the full path where save file in the backend
     const post = {
-        id: Number(req.body.id),  //when test on postman here use Number format
+        id: uuidv4(),  //ID UNIVOCO +-128BIT
         slug : req.body.slug,   //important also x seo, i.e. sonic-hyperspace-rocket
         title : req.body.title,
         content : req.body.content,
         price : Number(req.body.price),
         file : filePath,  //THE NAME OF THE FIELD IS 'FILE' foundamental x 'upload.single('file')'
         category: req.body.category,
-        tags : req.body.tags,
+        tags : JSON.parse(req.body.tags),  //CONVERT THIS JSON IN ORGINAL ARRAY! USE ARRAY+FORMDATAtype IS IMPORTANT
         visibility: req.body.visibility,
-
     };
     posts.push(post);  //add the new post
     try{  
